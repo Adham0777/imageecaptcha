@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captcha</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2b2b2b;
+            color: #fff;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .captcha-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            background: #444;
+            padding: 20px;
+            border: 2px solid #007BFF;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+        .captcha-instructions {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .image-grid img {
+            width: 100px;
+            height: 100px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .image-grid img:hover {
+            border-color: #007BFF;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 20px;
+            display: none;
+            font-weight: bold;
+        }
+        .close-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .close-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="openCaptcha()">Verify I'm Not a Robot</button>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="captcha-container" id="captcha-container">
+        <p class="captcha-instructions" id="captcha-instructions"></p>
+        <div class="image-grid" id="captcha-grid"></div>
+        <button onclick="verifyCaptcha()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Submit</button>
+        <button class="close-btn" onclick="closeCaptcha()">Close</button>
+        <div class="message" id="success-message" style="color: green;">Verified!</div>
+        <div class="message" id="error-message" style="color: red;">Try again! </div>
+    </div>
+
+    <script>
+        const images = [
+            { src: 'a1.jpg', type: 'animal' },
+            { src: 'f1.jpg', type: 'fish' },
+            { src: 'b1.jpg', type: 'bird' },
+            { src: 'a2.jpg', type: 'animal' },
+            { src: 'f2.jpg', type: 'fish' },
+            { src: 'b2.jpg', type: 'bird' },
+            { src: 'a3.jpg', type: 'animal' },
+            { src: 'f3.jpg', type: 'fish' },
+            { src: 'b3.jpg', type: 'bird' }
+        ];
+
+        const categories = ['animal', 'fish', 'bird'];
+        let selectedCategory = '';
+        const selectedImages = [];
+
+        function openCaptcha() {
+            selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+            document.getElementById('captcha-instructions').textContent = `Verify you are a human by clicking on all images of ${selectedCategory}s.`;
+            loadCaptcha();
+            document.getElementById('captcha-container').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function loadCaptcha() {
+            const grid = document.getElementById('captcha-grid');
+            grid.innerHTML = '';
+            selectedImages.length = 0;
+            images.sort(() => Math.random() - 0.5);
+
+            images.forEach((image, index) => {
+                const imgElement = document.createElement('img');
+                imgElement.src = image.src;
+                imgElement.alt = `Image ${index + 1}`;
+                imgElement.addEventListener('click', () => toggleSelection(index, imgElement));
+                grid.appendChild(imgElement);
+            });
+        }
+
+        function toggleSelection(index, imgElement) {
+            const isSelected = selectedImages.includes(index);
+
+            if (isSelected) {
+                const idx = selectedImages.indexOf(index);
+                selectedImages.splice(idx, 1);
+                imgElement.style.borderColor = 'transparent';
+            } else {
+                selectedImages.push(index);
+                imgElement.style.borderColor = '#007BFF';
+            }
+        }
+
+        function verifyCaptcha() {
+            const successMessage = document.getElementById('success-message');
+            const errorMessage = document.getElementById('error-message');
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const isCorrect = selectedImages.every(index => images[index].type === selectedCategory) &&
+                selectedImages.length === images.filter(img => img.type === selectedCategory).length;
+
+            if (isCorrect) {
+                successMessage.style.display = 'block';
+            } else {
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function closeCaptcha() {
+            document.getElementById('captcha-container').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+            selectedImages.length = 0;
+        }
+    </script>
+</body>
+</html>
